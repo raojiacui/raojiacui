@@ -8,6 +8,3 @@
 
 ---
 
-<p align="center">
-  <a href="https://github.com/raojiacui/prompt-lens">PromptLens</a> · 400+ stars
-</p>
