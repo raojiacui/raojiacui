@@ -1,4 +1,4 @@
-# @raojiacui
+# @yuyu
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raojiacui.github.io/github-contribution-grid-snake-dark.svg" />
