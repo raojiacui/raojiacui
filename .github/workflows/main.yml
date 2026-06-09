@@ -6,15 +6,27 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - master
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  generate:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - name: generate github-contribution-grid-snake.svg
         uses: Platane/snk/svg-only@v3
         with:
@@ -25,11 +37,69 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push to output branch
-        uses: crazy-max/ghaction-github-pages@v4
+      - name: Build Pages site
+        run: |
+          cat > dist/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>raojiacui contribution snake</title>
+              <style>
+                :root {
+                  color-scheme: light dark;
+                  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                  background: #f6f8fa;
+                  color: #24292f;
+                }
+                @media (prefers-color-scheme: dark) {
+                  :root {
+                    background: #0d1117;
+                    color: #f0f6fc;
+                  }
+                }
+                body {
+                  min-height: 100vh;
+                  margin: 0;
+                  display: grid;
+                  place-items: center;
+                  padding: 24px;
+                  box-sizing: border-box;
+                }
+                main {
+                  width: min(100%, 980px);
+                }
+                h1 {
+                  font-size: 24px;
+                  font-weight: 650;
+                  margin: 0 0 20px;
+                }
+                img {
+                  display: block;
+                  width: 100%;
+                  height: auto;
+                }
+              </style>
+            </head>
+            <body>
+              <main>
+                <h1>@raojiacui contribution snake</h1>
+                <picture>
+                  <source media="(prefers-color-scheme: dark)" srcset="./github-contribution-grid-snake-dark.svg">
+                  <img alt="@raojiacui contribution snake" src="./github-contribution-grid-snake.svg">
+                </picture>
+              </main>
+            </body>
+          </html>
+          EOF
+          touch dist/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          target_branch: output
-          build_dir: dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
